@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi  # Adjust as needed
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-server-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-server
+  template:
+    metadata:
+      labels:
+        app: mysql-server
+    spec:
+      containers:
+      - name: mysql-server
+        image: mysql:5.7.8
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "petclinic"
+        - name: MYSQL_DATABASE
+          value: "petclinic"
+        resources:
+          limits:
+            memory: "256Mi"
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-conf
+          mountPath: /etc/mysql/conf.d
+          readOnly: true
+        - name: mysql-data
+          mountPath: /var/lib/mysql  # MySQL data location
+      volumes:
+      - name: mysql-conf
+        hostPath:
+          path: ./conf.d  # Point to your local configuration directory
+      - name: mysql-data
+        persistentVolumeClaim:
+          claimName: mysql-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-server-service
+spec:
+  selector:
+    app: mysql-server
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
+  type: ClusterIP  # or LoadBalancer/NodePort if you need external access

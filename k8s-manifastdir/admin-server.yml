@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-server-deployment
+  labels:
+    app: admin-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin-server
+  template:
+    metadata:
+      labels:
+        app: admin-server
+    spec:
+      containers:
+      - name: admin-server
+        image: amarnathvenkatam/petclinic-admin-server:dev
+        ports:
+        - containerPort: 9090
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-server-service
+spec:
+  selector:
+    app: admin-server
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090
